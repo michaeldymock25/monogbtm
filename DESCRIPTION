@@ -1,0 +1,14 @@
+Package: monogbtm
+Type: Package
+Title: Fits Monotone Polynomials to Group Based Trajectory Models
+Version: 0.1.0
+Authors@R: person("Michael", "Dymock", email = "michael.dymock1@hotmail.com", role = c("aut", "cre"))
+Description: This package allows the user to fit group based trajectory models using 
+    monotonically constrained polynomials. This is useful when fitting models 
+    where the response curve is known to be monotone. 
+License: GPL (>= 2)
+Encoding: UTF-8
+LazyData: true
+Depends: R (>= 3.5.0)
+Imports: gtools (>= 3.5.0),Matrix (>= 1.2-14),matrixStats (>= 0.55.0),MonoPoly (>= 0.3-10)
+Suggests: testthat
