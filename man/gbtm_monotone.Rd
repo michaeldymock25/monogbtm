@@ -29,8 +29,8 @@ gbtm_monotone()
   \item{covariates_summary}{tabulated summary of the covariate structure output}
 }
 \description{
-This package allows the user to fit group based trajectory models using
-    monotonically constrained polynomials. This is useful when fitting modelsbr
+This function allows the user to fit group based trajectory models using
+    monotonically constrained polynomials. This is useful when fitting models
     where the response curve is known to be monotone.
 }
 \examples{
