@@ -1,15 +1,7 @@
-#library(gtools)
-#library(Matrix)
-#library(matrixStats)
-#library(MonoPoly)
-
 requireNamespace("gtools", quietly = TRUE)
 requireNamespace("Matrix", quietly = TRUE)
 requireNamespace("matrixStats", quietly = TRUE)
 requireNamespace("MonoPoly", quietly = TRUE)
-
-## need to refer to functions using the above packages with the syntax MonoPoly:SosPol.fit
-## also specify which versions of the packages are required
 
 ## functions required to estimate group based trajectory models with monotonicity constraints (with standard errors script)
 ## to estimate a model, run gbtm_monotone noting the following specifications:
@@ -181,9 +173,20 @@ gbtm_monotone <- function(data, n_gps, x, poly_degs = rep(3, n_gps), n_starts = 
     out_covs$t_value <- c('',round(out_covs$Coefficient[-1]/as.numeric(out_covs$Standard_Error[-1]),4))
     out_covs$p_value <- c('',round(2*pt(abs(as.numeric(out_covs$t_value[-1])), df = length(unlist(thetas)), lower.tail = FALSE),4))
   }
+  memberships <- data.frame(matrix(NA, nrow = nrow(data), ncol = 0))
+  pis <- data.frame(matrix(NA, nrow = ifelse(is.matrix(estimates[[1]]), nrow(estimates[[1]]), 1) , ncol = 0))
+  for(i in 1:n_gps){
+    memberships[,paste("Group",i)] <- round(data[, dim+i],10)
+    pis[,paste("Group",i)] <- ifelse(is.matrix(estimates[[1]]), estimates[[1]][,i], estimates[[1]][i])
+    thetas[[i]] <- as.vector(thetas[[i]])
+  }
+  if(!is.null(covariates)){
+    gammas <- data.frame(Intercept = estimates[[4]][,1])
+    for(i in 2:ncol(covariates)) gammas_out[, paste("Covariate", i)] <- estimates[[4]][,i]
+  }
   end.time <- Sys.time()
   time.diff <- end.time - start.time
-  return(list(memberships = cbind(1:nrow(data),round(data[,-(1:dim)],4)), pis = estimates[[1]], thetas = thetas, sigma2 = estimates[[3]], gammas = estimates[[4]], log_likelihood = log_lik, time = time.diff, summary = out,  covariates_summary = out_covs))
+  return(list(memberships = memberships, pis = pis, thetas = thetas, sigma2 = estimates[[3]], gammas = gammas, log_likelihood = log_lik, time = time.diff, summary = out,  covariates_summary = out_covs))
 }
 
 e_step_init <- function(data, dim, estimates, response){
