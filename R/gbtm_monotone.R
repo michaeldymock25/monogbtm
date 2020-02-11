@@ -177,7 +177,11 @@ gbtm_monotone <- function(data, n_gps, x, poly_degs = rep(3, n_gps), n_starts = 
   pis <- data.frame(matrix(NA, nrow = ifelse(is.matrix(estimates[[1]]), nrow(estimates[[1]]), 1) , ncol = 0))
   for(i in 1:n_gps){
     memberships[,paste("Group",i)] <- round(data[, dim+i],10)
-    pis[,paste("Group",i)] <- ifelse(is.matrix(estimates[[1]]), estimates[[1]][,i], estimates[[1]][i])
+    if(nrow(pis) != 1){
+      pis[,paste("Group",i)] <- estimates[[1]][,i]
+    } else {
+      pis[,paste("Group",i)] <- estimates[[1]][i]
+    }
     thetas[[i]] <- as.vector(thetas[[i]])
   }
   if(!is.null(covariates)){
