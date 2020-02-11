@@ -18,11 +18,11 @@ gbtm_monotone()
   \item{response}{data type of observations (can be gaussian, poisson or bernoulli for gaussian, count and binary data respectively}
 }
 \value{
-  \item{memberships}{matrix containing data with the estimated group membership probabilities}
-  \item{pis}{matrix containing the estimated group proportions}
+  \item{memberships}{data frame containing the estimated group membership probabilities}
+  \item{pis}{data frame containing the estimated group proportions}
   \item{thetas}{list containing the parameter estimates for the polynomials}
-  \item{sigma2}{estimates for the variance parameter}
-  \item{gammas}{matrix containing estimates for the parameters governing the covariate structure}
+  \item{sigma2}{estimate for the variance parameter}
+  \item{gammas}{if covariates are provided, a data frame containing estimates for the parameters governing the covariate structure}
   \item{log_likelihood}{log-likelihood value of the final model}
   \item{time}{length of time taken to run model}
   \item{summary}{tabulated summary of the output}
