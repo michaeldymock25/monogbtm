@@ -183,7 +183,7 @@ gbtm_monotone <- function(data, n_gps, x, poly_degs = rep(3, n_gps), n_starts = 
   if(!is.null(covariates)){
     gammas <- data.frame(Intercept = estimates[[4]][,1])
     for(i in 2:ncol(covariates)) gammas[, paste("Covariate", i)] <- estimates[[4]][,i]
-  }
+  } else { gammas <- NULL }
   end.time <- Sys.time()
   time.diff <- end.time - start.time
   return(list(memberships = memberships, pis = pis, thetas = thetas, sigma2 = estimates[[3]], gammas = gammas, log_likelihood = log_lik, time = time.diff, summary = out,  covariates_summary = out_covs))
