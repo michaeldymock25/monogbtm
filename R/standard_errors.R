@@ -55,19 +55,22 @@ com_inf_gamma <- function(weights, gammas, g1, g2, Z){
   mat <- matrix(NA, nrow = ncol(Z), ncol = ncol(Z))
   gam_sums <- colSums(exp(gammas%*%t(Z)))      ## store outside loop to speed up computations
   if(g1 == g2){                                ## if g1 = g2 compute I_c(gamma_g1)
-   for(j in 1:nrow(mat)){
-     for(k in j:ncol(mat)){
-       mat[j,k] <- sum(Z[,j]*Z[,k]*exp(gammas[g1,]%*%t(Z))*(gam_sums-exp(gammas[g1,]%*%t(Z)))/gam_sums^2)
-       mat[k,j] <- mat[j,k]
-     }
-   } 
+    temp_g1 <- exp(gammas[g1,]%*%t(Z))
+    for(j in 1:nrow(mat)){
+      for(k in j:ncol(mat)){
+        mat[j,k] <- sum(Z[,j]*Z[,k]*temp_g1*(gam_sums-temp_g1)/gam_sums^2)
+        mat[k,j] <- mat[j,k]
+      }
+    } 
   } else {                                     ## otherwise compute I_c(gamma_g1,gamma_g2)
-   for(j in 1:nrow(mat)){
-     for(k in j:ncol(mat)){
-       mat[j,k] <- -sum(Z[,j]*Z[,k]*exp(gammas[g1,]%*%t(Z))*exp(gammas[g2,]%*%t(Z))/gam_sums^2)
-       mat[k,j] <- mat[j,k]
-     }
-   }
+    temp_g1 <- exp(gammas[g1,]%*%t(Z))
+    temp_g2 <- exp(gammas[g2,]%*%t(Z))
+    for(j in 1:nrow(mat)){
+      for(k in j:ncol(mat)){
+        mat[j,k] <- -sum(Z[,j]*Z[,k]*tempg1*tempg2/gam_sums^2)
+        mat[k,j] <- mat[j,k]
+      }
+    }
   }
   return(mat)
 }
