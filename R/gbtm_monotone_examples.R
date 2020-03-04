@@ -1,5 +1,4 @@
-## this script contains examples of fitting group based trajectory models with gbtm_monotone (note that it requires functions
-## from both gbtm_monotone and standard_errors scripts)
+## this script contains examples of fitting group based trajectory models with gbtm_monotone
 
 sim_data <- function(n, dim, x, group_mem, thetas, sd, response){  
   
