@@ -55,22 +55,19 @@ com_inf_gamma <- function(weights, gammas, g1, g2, Z){
   mat <- matrix(NA, nrow = ncol(Z), ncol = ncol(Z))
   gam_sums <- colSums(exp(gammas%*%t(Z)))      ## store outside loop to speed up computations
   if(g1 == g2){                                ## if g1 = g2 compute I_c(gamma_g1)
-    temp_g1 <- exp(gammas[g1,]%*%t(Z))
-    for(j in 1:nrow(mat)){
-      for(k in j:ncol(mat)){
-        mat[j,k] <- sum(Z[,j]*Z[,k]*temp_g1*(gam_sums-temp_g1)/gam_sums^2)
-        mat[k,j] <- mat[j,k]
-      }
-    } 
+   for(j in 1:nrow(mat)){
+     for(k in j:ncol(mat)){
+       mat[j,k] <- sum(Z[,j]*Z[,k]*exp(gammas[g1,]%*%t(Z))*(gam_sums-exp(gammas[g1,]%*%t(Z)))/gam_sums^2)
+       mat[k,j] <- mat[j,k]
+     }
+   } 
   } else {                                     ## otherwise compute I_c(gamma_g1,gamma_g2)
-    temp_g1 <- exp(gammas[g1,]%*%t(Z))
-    temp_g2 <- exp(gammas[g2,]%*%t(Z))
-    for(j in 1:nrow(mat)){
-      for(k in j:ncol(mat)){
-        mat[j,k] <- -sum(Z[,j]*Z[,k]*tempg1*tempg2/gam_sums^2)
-        mat[k,j] <- mat[j,k]
-      }
-    }
+   for(j in 1:nrow(mat)){
+     for(k in j:ncol(mat)){
+       mat[j,k] <- -sum(Z[,j]*Z[,k]*exp(gammas[g1,]%*%t(Z))*exp(gammas[g2,]%*%t(Z))/gam_sums^2)
+       mat[k,j] <- mat[j,k]
+     }
+   }
   }
   return(mat)
 }
@@ -79,18 +76,18 @@ com_inf_theta <- function(weights, dim, X_des, theta, sigma2, response){
   
   ## computes complete data information matrix for theta
   
-  X_des <- X_des[,1:length(theta)]    ## adjust design matrix for each group theta (as polynomial degree may differ)
-  ind <- 2                            ## set an indicator variable
-  if(length(theta)==1){               ## change indicator if theta polynomial is only a constant
-    X_des <- as.matrix(X_des)
-    ind <- 1
+  X_des <- X_des[,1:length(theta)] ## adjust design matrix for each group theta (as polynomial degree may differ)
+  if(length(theta)!= 1){               
+    X_des_temp <- X_des[,2]   
+  } else {  
+    X_des_temp <- X_des       ## if theta polynomial is only a constant
   }
   mat <- matrix(NA, nrow = length(theta), ncol = length(theta))
   weights_ext <- rep(weights, each = dim)    ## extend weights to match length of design matrix (n x T)
   if(response == "gaussian"){
     for(j in 1:nrow(mat)){
       for(k in j:ncol(mat)){
-        mat[j,k] <- 1/sigma2*sum(weights_ext*X_des[,ind]^(j+k-2))
+        mat[j,k] <- 1/sigma2*sum(weights_ext*X_des_temp^(j+k-2))
         mat[k,j] <- mat[j,k]
       }
     }
@@ -98,7 +95,7 @@ com_inf_theta <- function(weights, dim, X_des, theta, sigma2, response){
     theta_const<- exp(X_des%*%theta)  ## store outside loop to speed up computations
     for(j in 1:nrow(mat)){
       for(k in j:ncol(mat)){
-        mat[j,k] <- sum(weights_ext*X_des[,ind]^(j+k-2)*theta_const) 
+        mat[j,k] <- sum(weights_ext*X_des_temp^(j+k-2)*theta_const) 
         mat[k,j] <- mat[j,k]
       }
     }
@@ -106,7 +103,7 @@ com_inf_theta <- function(weights, dim, X_des, theta, sigma2, response){
     theta_const<- exp(X_des%*%theta)  ## store outside loop to speed up computations
     for(j in 1:nrow(mat)){
       for(k in j:ncol(mat)){
-        mat[j,k] <- sum(weights_ext*X_des[,ind]^(j+k-2)*theta_const/(1+theta_const)^2) 
+        mat[j,k] <- sum(weights_ext*X_des_temp^(j+k-2)*theta_const/(1+theta_const)^2) 
         mat[k,j] <- mat[j,k]
       }
     }
@@ -257,14 +254,14 @@ cov_score_gamma <- function(Z, weights){
   mat <- matrix(NA, nrow = ((ncol(weights)-1)*ncol(Z)), ncol = ((ncol(weights)-1)*ncol(Z)))
   vars <- weights*(1-weights)                                
   for(j in 2:ncol(weights)){         
-    for(k in 2:ncol(weights)){       
+    for(k in j:ncol(weights)){       
       if(j == k){
         temp_mat <- matrix(NA, nrow = ncol(Z), ncol = ncol(Z))
         for(m in 1:nrow(temp_mat)){
           temp_mat[m,] <- colSums(Z[,m]*Z*vars[,j])
         }
         mat[(1+(j-2)*ncol(Z)):((j-1)*ncol(Z)),(1+(j-2)*ncol(Z)):((j-1)*ncol(Z))] <- temp_mat
-      } else if(k > j){
+      } else {
         covs <- -weights[,j]*weights[,k]
         temp_mat <- matrix(NA, nrow = ncol(Z), ncol = ncol(Z))
         for(m in 1:nrow(temp_mat)){
@@ -318,9 +315,10 @@ cov_score_theta_theta <- function(Theta_g1, Theta_g2, weights, gp1, gp2){
   ## computes covariance of the score vector with respect two different groups
   
   mat <- matrix(NA, nrow = ncol(Theta_g1), ncol = ncol(Theta_g2))
+  temp <- Theta_g2*weights[,gp1]*weights[,gp2]
   for(m in 1:nrow(mat)){
-    mat[m,] <- -colSums(Theta_g1[,m]*Theta_g2*weights[,gp1]*weights[,gp2])
+    mat[m,] <- -colSums(Theta_g1[,m]*temp)
   }
   return(mat)
-} 
+}
 
