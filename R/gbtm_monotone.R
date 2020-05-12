@@ -119,7 +119,7 @@ gbtm_monotone <- function(data, n_gps, x, poly_degs = rep(3, n_gps), n_starts = 
     }
     if(!is.null(conf_level)){
       cat("Computing confidence intervals ...", "\n")                      ## compute confidence bands at level conf_level
-      conf_bands <- conf_boot(data, estimates, 250, conf_level, n_gps, dim, X_des, n_starts, X_pred, poly_degs, covariates, monotone, response)
+      conf_bands <- conf_boot(data, estimates, 500, conf_level, n_gps, dim, X_des, n_starts, X_pred, poly_degs, covariates, monotone, response)
       plot(y_pred[,1]~x_pred, type = 'l', ylim = c((min(y_pred)-0.1), (max(y_pred)+0.1)), col = cols[1], xlab = "Scaled Time", ylab = "Response")     ## plot fitted values
       conf_cols <- c("gray50","gray55","gray60","gray65","gray70","gray75")                                  ## confidence band colours
       for(j in 1:n_gps){                                                                                     ## add confidence bands
