@@ -55,6 +55,7 @@ gbtm_monotone <- function(data, n_gps, x, poly_degs = rep(3, n_gps), n_starts = 
         covariates <- cbind(1, covariates)                           ## ensure the first column of covariates is a vector
       }                                                              ## of ones (for the intercept term)
     }
+    obs <- as.vector(t(data[,1:dim]))                                ## extract observations and store in an (n x T) vector  
   } else if(boot == 'on'){
     X_des <- x
     dim <- ncol(data) - n_gps
@@ -76,7 +77,7 @@ gbtm_monotone <- function(data, n_gps, x, poly_degs = rep(3, n_gps), n_starts = 
     log_liks_orders <- vector(length = nrow(poly_degs_orders))    ## for each permutation of the polynomial degrees run the
     data_temp <- e_step_init(data, dim, init_ests, response)      ## EM algorithm one iteration and record the log-likelihood
     for(j in 1:nrow(poly_degs_orders)){
-      estimates_temp <- m_step(data_temp, dim, X_des, poly_degs_orders[j,], monotone, covariates, response)
+      estimates_temp <- m_step(data_temp, obs, dim, X_des, poly_degs_orders[j,], monotone, covariates, response)
       log_liks_orders[j] <- log_lik(data_temp, dim, estimates_temp, X_des, poly_degs_orders[j,], response)
     }
     poly_degs_temp[i,] <- poly_degs_orders[which.max(log_liks_orders),]   ## for each set of initial values store the permutation
@@ -86,7 +87,7 @@ gbtm_monotone <- function(data, n_gps, x, poly_degs = rep(3, n_gps), n_starts = 
   poly_degs <- poly_degs_temp[which.max(log_liks),]                                  ## choose the set of initial values with corresponding
   init_ests <- list(pis[[which.max(log_liks)]], mus[[which.max(log_liks)]], sigma2)  ## degree permutation that maximises the log-likelihood
   data <- e_step_init(data, dim, init_ests, response)                                ## proceed once more to the first EM iteration
-  estimates <- m_step(data, dim, X_des, poly_degs, monotone, covariates, response)
+  estimates <- m_step(data, obs, dim, X_des, poly_degs, monotone, covariates, response)
   log_lik <- log_lik(data, dim, estimates, X_des, poly_degs, response)
   cat("Iteration: ","0   ","Log-Likelihood: ",log_lik, "\n")              ## log-likelihood at optimal initial values
   log_lik_old <- -Inf
@@ -95,7 +96,7 @@ gbtm_monotone <- function(data, n_gps, x, poly_degs = rep(3, n_gps), n_starts = 
     count <- count + 1
     log_lik_old <- log_lik
     data <- e_step(data, dim, estimates, X_des, poly_degs, response)                  ## expectation step
-    estimates <- m_step(data, dim, X_des, poly_degs, monotone, covariates, response)  ## maximisation step
+    estimates <- m_step(data, obs, dim, X_des, poly_degs, monotone, covariates, response)  ## maximisation step
     log_lik <- log_lik(data, dim, estimates, X_des, poly_degs, response)              ## compute log-likelihood
     cat("Iteration: ",as.character(count),"  ","Log-Likelihood: ",log_lik, "\n")      ## log-likelihood at current iteration
   }
@@ -246,7 +247,7 @@ e_step <- function(data, dim, estimates, X_des, poly_degs, response){
   return(cbind(data[,1:dim], weights))      ## return data containing observations and weights
 }
 
-m_step <- function(data, dim, X_des, poly_degs, monotone, covariates, response){
+m_step <- function(data, obs, dim, X_des, poly_degs, monotone, covariates, response){
 
   ## maximisation step to maximise the log-likelihood given group memberships
   ## from the expectation step. Computes parameter estimates for pis (and/or gammas)
@@ -265,7 +266,6 @@ m_step <- function(data, dim, X_des, poly_degs, monotone, covariates, response){
     pis <- t(exp(gammas%*%t(covariates)))/rowSums(t(exp(gammas%*%t(covariates))))
   }
   thetas <- list()                       ## initialise list for ML estimates
-  obs <- as.vector(t(data[,1:dim]))      ## extract observations and store in an (n x T) vector
   if(response == "gaussian"){
     cumss <- 0                           ## start cumulative sums of squares to estimate variance
     for(j in 1:n_gps){
