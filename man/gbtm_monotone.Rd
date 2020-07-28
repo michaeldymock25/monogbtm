@@ -34,6 +34,6 @@ This function allows the user to fit group based trajectory models using
     where the response curve is known to be monotone.
 }
 \examples{
-#gbtm_monotone(data, 4, x, c(1,2,3,3), monotone = FALSE)
-#gbtm_monotone(data, 3, x, c(3,3,3), conf_level = 95)
+gbtm_monotone(data, 4, x, c(1,2,3,3), monotone = FALSE)
+gbtm_monotone(data, 3, x, c(3,3,3), conf_level = 95)
 }
