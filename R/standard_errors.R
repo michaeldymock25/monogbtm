@@ -13,26 +13,23 @@ std_errors <- function(data, dim, estimates, X_des, covariates, response){
 }
 
 com_inf <- function(weights, dim, estimates, X_des, Z, response){   
-
+  
   ## computes complete data information matrix (block matrix)
   ## note Z is a matrix containing the covariates
   
   if(is.null(Z)){
-   com_inf_gpprops_mat <- com_inf_pi(weights, estimates[[1]])   ## if there are no covariates compute matrix for pis (group proportions)
-  } else {                                                      ## otherwise compute matrix for gammas
-   com_inf_gpprops_mat <- matrix(NA, nrow = ((ncol(weights)-1)*(ncol(Z))), ncol = ((ncol(weights)-1)*(ncol(Z))))
-   for(j in 2:ncol(weights)){
-     for(k in 2:ncol(weights)){
-       com_inf_gpprops_mat[((1+ncol(Z)*(j-2)):(ncol(Z)*(j-1))),
-                           ((1+ncol(Z)*(k-2)):(ncol(Z)*(k-1)))] <- com_inf_gamma(weights, estimates[[4]], j, k, Z)
-     }
-   }
+    com_inf_gpprops_mat <- com_inf_pi(weights, estimates[[1]])   ## if there are no covariates compute matrix for pis (group proportions)
+  } else {                                                       ## otherwise compute matrix for gammas
+    com_inf_gpprops_mat <- matrix(NA, nrow = ((ncol(weights)-1)*(ncol(Z))), ncol = ((ncol(weights)-1)*(ncol(Z))))
+    for(j in 2:ncol(weights)){
+      for(k in 2:ncol(weights)){
+        com_inf_gpprops_mat[((1+ncol(Z)*(j-2)):(ncol(Z)*(j-1))),
+                            ((1+ncol(Z)*(k-2)):(ncol(Z)*(k-1)))] <- com_inf_gamma(weights, estimates[[4]], j, k, Z)
+      }
+    }
   }
-  theta_mats <- list()
-  for(j in 1:ncol(weights)){                                          ## compute matrix for each group (j in 1 to J)
-   theta_mats[[j]] <- com_inf_theta(weights[,j], dim, X_des, estimates[[2]][[j]], estimates[[3]], response)
-  }
-  com_inf_mat <- Matrix::bdiag(list(com_inf_gpprops_mat, Matrix::bdiag(theta_mats)))  ## combine all above matrices as a block diagonal matrix
+  theta_mats <- lapply(1:ncol(weights), function(gp) com_inf_theta(weights[,gp], dim, X_des, estimates[[2]][[gp]], estimates[[3]], response)) ## compute matrix for each group (j in 1 to J)
+  com_inf_mat <- Matrix::bdiag(list(com_inf_gpprops_mat, Matrix::bdiag(theta_mats)))                                                          ## combine all above matrices as a block diagonal matrix
   return(com_inf_mat)
 }
 
@@ -55,19 +52,19 @@ com_inf_gamma <- function(weights, gammas, g1, g2, Z){
   mat <- matrix(NA, nrow = ncol(Z), ncol = ncol(Z))
   gam_sums <- colSums(exp(gammas%*%t(Z)))      ## store outside loop to speed up computations
   if(g1 == g2){                                ## if g1 = g2 compute I_c(gamma_g1)
-   for(j in 1:nrow(mat)){
-     for(k in j:ncol(mat)){
-       mat[j,k] <- sum(Z[,j]*Z[,k]*exp(gammas[g1,]%*%t(Z))*(gam_sums-exp(gammas[g1,]%*%t(Z)))/gam_sums^2)
-       mat[k,j] <- mat[j,k]
-     }
-   } 
+    for(j in 1:nrow(mat)){
+      for(k in j:ncol(mat)){
+        mat[j,k] <- sum(Z[,j]*Z[,k]*exp(gammas[g1,]%*%t(Z))*(gam_sums-exp(gammas[g1,]%*%t(Z)))/gam_sums^2)
+        mat[k,j] <- mat[j,k]
+      }
+    } 
   } else {                                     ## otherwise compute I_c(gamma_g1,gamma_g2)
-   for(j in 1:nrow(mat)){
-     for(k in j:ncol(mat)){
-       mat[j,k] <- -sum(Z[,j]*Z[,k]*exp(gammas[g1,]%*%t(Z))*exp(gammas[g2,]%*%t(Z))/gam_sums^2)
-       mat[k,j] <- mat[j,k]
-     }
-   }
+    for(j in 1:nrow(mat)){
+      for(k in j:ncol(mat)){
+        mat[j,k] <- -sum(Z[,j]*Z[,k]*exp(gammas[g1,]%*%t(Z))*exp(gammas[g2,]%*%t(Z))/gam_sums^2)
+        mat[k,j] <- mat[j,k]
+      }
+    }
   }
   return(mat)
 }
@@ -131,7 +128,7 @@ cov_score <- function(data, dim, weights, estimates, X_des, Z, response){
       cov_score_mat[1:(ncol(weights)-1),                                        ## with respect to pi and each group theta
                     (ncol(weights)+count):(ncol(weights)+count+length(thetas[[j]])-1)] <- temp_mat
       cov_score_mat[(ncol(weights)+count):(ncol(weights)+count+length(thetas[[j]])-1),
-                   1:(ncol(weights)-1)] <- t(temp_mat)
+                    1:(ncol(weights)-1)] <- t(temp_mat)
       count <- count + length(thetas[[j]])
     }
   } else {
@@ -185,19 +182,13 @@ Thetas <- function(data, dim, X_des, thetas, sigma2, response){
     }
     if(response == "gaussian"){
       theta_const <- X_gp%*%thetas[[j]]        ## store outside loop to speed up computations
-      for(p in 1:length(thetas[[j]])){
-        Theta_mat[,p] <- colSums(matrix(1/sigma2*X_gp[,p]*(obs-theta_const), nrow = dim, ncol = nrow(data)))
-      }
+      Theta_mat <- sapply(1:length(thetas[[j]]), function(p) colSums(matrix(1/sigma2*X_gp[,p]*(obs-theta_const), nrow = dim, ncol = nrow(data))))
     } else if(response == "poisson"){
       theta_const <- exp(X_gp%*%thetas[[j]])   ## store outside loop to speed up computations
-      for(p in 1:length(thetas[[j]])){
-        Theta_mat[,p] <- colSums(matrix(X_gp[,p]*(obs-theta_const), nrow = dim, ncol = nrow(data)))
-      }
+      Theta_mat <- sapply(1:length(thetas[[j]]), function(p) colSums(matrix(X_gp[,p]*(obs-theta_const), nrow = dim, ncol = nrow(data))))
     } else if(response == "bernoulli"){
       theta_const <- exp(X_gp%*%thetas[[j]])/(1+exp(X_gp%*%thetas[[j]]))   ## store outside loop to speed up computations
-      for(p in 1:length(thetas[[j]])){
-        Theta_mat[,p] <- colSums(matrix(X_gp[,p]*(obs-theta_const), nrow = dim, ncol = nrow(data)))
-      }
+      Theta_mat <- sapply(1:length(thetas[[j]]), function(p) colSums(matrix(X_gp[,p]*(obs-theta_const), nrow = dim, ncol = nrow(data))))
     }
     Thetas[[j]] <- Theta_mat
   }
@@ -302,11 +293,8 @@ cov_score_gamma_theta <- function(Theta, weights, Z, gp){
 cov_score_theta <- function(Theta, weights, gp){ 
   
   ## computes covariance of the score vector with respect to theta
-  
-  mat <- matrix(NA, nrow = ncol(Theta), ncol = ncol(Theta))
-  for(m in 1:nrow(mat)){
-    mat[m,] <- colSums(Theta[,m]*Theta*weights[,gp]*(1-weights[,gp]))
-  }
+
+  mat <- t(apply(Theta, 2, function(x) colSums(x*Theta*weights[,gp]*(1-weights[,gp]))))
   return(mat)
 }  
 
@@ -316,9 +304,6 @@ cov_score_theta_theta <- function(Theta_g1, Theta_g2, weights, gp1, gp2){
   
   mat <- matrix(NA, nrow = ncol(Theta_g1), ncol = ncol(Theta_g2))
   temp <- Theta_g2*weights[,gp1]*weights[,gp2]
-  for(m in 1:nrow(mat)){
-    mat[m,] <- -colSums(Theta_g1[,m]*temp)
-  }
+  mat <- t(apply(Theta_g1, 2, function(x) -colSums(x*temp)))
   return(mat)
 }
-
