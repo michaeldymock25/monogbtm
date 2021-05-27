@@ -302,7 +302,6 @@ cov_score_theta_theta <- function(Theta_g1, Theta_g2, weights, gp1, gp2){
   
   ## computes covariance of the score vector with respect two different groups
   
-  mat <- matrix(NA, nrow = ncol(Theta_g1), ncol = ncol(Theta_g2))
   temp <- Theta_g2*weights[,gp1]*weights[,gp2]
   mat <- t(apply(Theta_g1, 2, function(x) -colSums(x*temp)))
   return(mat)
