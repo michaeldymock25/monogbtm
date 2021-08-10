@@ -20,11 +20,12 @@ requireNamespace("ggplot2", quietly = TRUE)
 ## plot_it - if TRUE will plot the estimated trajectories
 ## conf_level - computes confidence bands (at level conf_level) and plots with trajectories (note plot_it must also be TRUE)
 ## boot - LEAVE as 'off', it will turn to 'on' if computing bootstrapped iterations for confidence bands
+## sims - LEAVE as 'off' (required for testing)
 ## response - data type of observations (can be gaussian, poisson or bernoulli for gaussian, count and binary data respectively)
 
 ## for examples see gbtm_monotone_examples script (after running all functions)
 
-gbtm_monotone <- function(data, n_gps, x, poly_degs = rep(3, n_gps), n_starts = 10, monotone = TRUE, covariates = NULL, plot_it = TRUE, conf_level = NULL, boot = 'off', response = 'gaussian'){
+gbtm_monotone <- function(data, n_gps, x, poly_degs = rep(3, n_gps), n_starts = 10, monotone = TRUE, covariates = NULL, plot_it = TRUE, conf_level = NULL, boot = 'off', sims = 'off', response = 'gaussian'){
   
   ## main function to estimate group based trajectory models with monotonicity constraints
   ## first the format of the function's inputs are checked and corrected if required then
@@ -106,6 +107,7 @@ gbtm_monotone <- function(data, n_gps, x, poly_degs = rep(3, n_gps), n_starts = 
   }
   thetas <- estimates[[2]]                                                                                             ## store polynomial coefficients
   if(boot == 'on') return(thetas)                                                                                      ## if in a bootstrapped run end here and return thetas
+  if(sims == "on") return(list(thetas = thetas, log_likelihood = log_lik_c, time = Sys.time() - start.time))           ## if testing return output here                   
   cat("Converged","\n")                                                                                                ## declare convergence
   standard_errors <- sqrt(diag(std_errors(data, dim, estimates, X_des, covariates, response)))                         ## compute standard errors
   if(plot_it == TRUE){
