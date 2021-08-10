@@ -32,6 +32,8 @@ gbtm_monotone()
 This function allows the user to fit group based trajectory models using
     monotonically constrained polynomials. This is useful when fitting models
     where the response curve is known to be monotone.
+  
+Note that the estimation of standard errors can be computationally unstable in certain circumstances so treat with caution.
 }
 \examples{
 gbtm_monotone(data, 4, x, c(1,2,3,3), monotone = FALSE)
