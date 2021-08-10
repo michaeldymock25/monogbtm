@@ -15,6 +15,7 @@ gbtm_monotone()
   \item{plot_it}{if TRUE will plot the estimated trajectories}
   \item{conf_level}{computes confidence bands (at level conf_level) and plots with trajectories (note plot_it must also be TRUE)}
   \item{boot}{LEAVE as 'off', it will turn to 'on' if computing bootstrapped iterations for confidence bands}
+  \item{sims}{LEAVE as 'off' (required for testing)}
   \item{response}{data type of observations (can be gaussian, poisson or bernoulli for gaussian, count and binary data respectively}
 }
 \value{
