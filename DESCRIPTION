@@ -1,6 +1,6 @@
 Package: monogbtm
 Type: Package
-Title: Fits Monotone Polynomials to Group Based Trajectory Models
+Title: Fit Monotone Polynomials to Group Based Trajectory Models
 Version: 0.1.0
 Authors@R: person("Michael", "Dymock", email = "michael.dymock1@hotmail.com", role = c("aut", "cre"))
 Description: This package allows the user to fit group based trajectory models using 
