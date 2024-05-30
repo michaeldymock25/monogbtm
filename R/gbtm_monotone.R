@@ -33,61 +33,66 @@ gbtm_monotone <- function(data, n_gps, x, poly_degs = rep(3, n_gps), n_starts = 
   ## the EM algorithm is run followed by computation of standard errors and confidence bands if required
   
   start.time <- Sys.time()
-  if(boot == 'off'){                                                 ## if we are not in a bootstrapped run (see conf_boot)
-    data <- as.matrix(data)                                          ## data required to be an n x T matrix
-    if(any(is.na(data))) stop("Failed: Missing Data Detected")       ## stop if there is any missing data
-    dim <- ncol(data)                                                ## each individual has a T dimensional data sequence
-    data <- cbind(data, matrix(0, nrow = nrow(data), ncol = n_gps))  ## columns added to store weights for each group
-    if(is.vector(x)){                                                ## if time-varying covariate is the same for all individuals
-      if(length(x) != dim) stop("Failed: Dimension of data not equal to dimension of time varying covariate")
-      x_scl <- (x - mean(x))/sd(x)                                   ## scale the time varying covariate for computation
-      X_des <- matrix(t(matrix(x_scl, nrow = dim,                    ## create design matrix X_des
-                               ncol = max(poly_degs)+1))^(0:max(poly_degs)), nrow = dim*nrow(data), ncol = (max(poly_degs)+1), byrow = T)
-    } else if(is.matrix(x)){                                         ## if time-varying covariate is not the same for all individuals
-      if(ncol(x) != dim) stop("Failed: Dimension of data not equal to dimension of time varying covariate")
-      X_des_unscl <- as.vector(t(x))                                 ## start creating design matrix X_des (unscaled)
+  if(boot == 'off'){                                                   ## if we are not in a bootstrapped run (see conf_boot)
+    data <- as.matrix(data)                                            ## data required to be an n x TT matrix
+    if(any(is.na(data))) stop("Failed: Missing Data Detected")         ## stop if there is any missing data
+    n <- nrow(data)                                                    ## number of individuals
+    TT <- ncol(data)                                                   ## number of time points
+    obs <- as.vector(t(data))                                          ## extract observations and store in an (n x TT) vector 
+    data <- cbind(data, matrix(0, nrow = n, ncol = n_gps))             ## columns added to store weights for each group
+    p <- max(poly_degs)                                                ## maximum polynomial degree
+    if(is.vector(x)){                                                  ## if time-varying covariate is the same for all individuals
+      if(length(x) != TT) stop("Failed: Dimension of data not equal to dimension of time varying covariate")
+      x_scl <- (x - mean(x))/sd(x)                                     ## scale the time varying covariate for computation
+      X_des <- matrix(t(matrix(x_scl, nrow = TT, ncol = p+1))^(0:p),   ## create design matrix X_des        
+                      nrow = TT*n, 
+                      ncol = p+1,
+                      byrow = TRUE)
+    } else if(is.matrix(x)){                                           ## if time-varying covariate is not the same for all individuals
+      if(ncol(x) != TT) stop("Failed: Dimension of data not equal to dimension of time varying covariate")
+      X_des_unscl <- as.vector(t(x))                                   ## start creating design matrix X_des (unscaled)
       x_unique <- unique(X_des_unscl)
-      x_scl <- (x_unique - mean(x_unique))/sd(x_unique)              ## scale the unique times
-      X_des <- vector(length = length(X_des_unscl))                  ## set up scaled design matrix
+      x_scl <- (x_unique - mean(x_unique))/sd(x_unique)                ## scale the unique times
+      X_des <- vector(length = length(X_des_unscl))                    ## set up scaled design matrix
       for(i in 1:length(x_scl)){
-        X_des[X_des_unscl == sort(x_unique)[i]] <- x_scl[i]          ## set each element to appropriate scaled time
+        X_des[X_des_unscl == sort(x_unique)[i]] <- x_scl[i]            ## set each element to appropriate scaled time
       }
-      X_des <- t(t(matrix(X_des, nrow = length(X_des), ncol = (max(poly_degs)+1)))^(0:max(poly_degs)))
+      X_des <- t(t(matrix(X_des, nrow = length(X_des), ncol = p+1))^(0:p))
     }
     if(length(poly_degs) != n_gps) stop("Failed: Number of polynomials not equal to number of groups")
     if(!is.null(covariates)){
-      covariates <- as.matrix(covariates)                            ## covariates required to be an n x q+1 matrix
-      if(sum(covariates[,1] == 1) != nrow(covariates)){
-        covariates <- cbind(1, covariates)                           ## ensure the first column of covariates is a vector
-      }                                                              ## of ones (for the intercept term)
-    }
-    obs <- as.vector(t(data[,1:dim]))                                ## extract observations and store in an (n x T) vector  
-  } else if(boot == 'on'){
+      covariates <- as.matrix(covariates)                              ## covariates required to be an n x q+1 matrix
+      if(!all(covariates[,1] == 1)) covariates <- cbind(1, covariates) ## ensure the first column of covariates is a vector of ones (for the intercept term)
+    } 
+    cat("Starting Generation of Initial Values", "\n")
+  } else if(boot == 'on'){                                             ## store key values from bootstrapped data
     X_des <- x
-    dim <- ncol(data) - n_gps
-    obs <- as.vector(t(data[,1:dim]))
+    n <- nrow(data)
+    TT <- ncol(data) - n_gps
+    obs <- as.vector(t(data[,1:TT]))
   }
   if(response == "gaussian"){
-    sigma2 <-  mean(diag(var(data[,1:dim])))                         ## if required estimate the initial value of sigma2
-  } else {sigma2 <- NULL}
-  if(boot == 'off') cat("Starting Generation of Initial Values", "\n")
-  init_values <- lapply(1:n_starts, function(i) kmeans(data[,1:dim], n_gps))                                           ## run kmeans n_starts times
+    sigma2 <-  mean(diag(var(data[,1:TT])))                            ## if required estimate the initial value of sigma2
+  } else {
+    sigma2 <- NULL
+  }
+  init_values <- lapply(1:n_starts, function(i) kmeans(data[,1:TT], n_gps))                                            ## run kmeans n_starts times
   mus <- lapply(init_values, function(x) x$centers)                                                                    ## store centers
-  pis <- lapply(init_values, function(x) matrix(rep(x$size, nrow(data)), nrow = nrow(data), byrow = TRUE)/nrow(data))  ## store sizes
+  pis <- lapply(init_values, function(x) matrix(rep(x$size, n), nrow = n, byrow = TRUE)/n)                             ## store sizes
   init_ests <- lapply(1:n_starts, function(i) list(pis[[i]], mus[[i]], sigma2))                                        ## store initial values
-  data_temp <- lapply(1:n_starts, function(i) e_step_init(data, dim, init_ests[[i]], response))                        ## run EM algorithm one iteration and record the log-likelihood
+  data_tmp <- lapply(1:n_starts, function(i) e_step_init(data, TT, init_ests[[i]], response))                          ## run E step once for each set of initial values
   poly_degs_orders <- unique(gtools::permutations(n_gps, n_gps, poly_degs, set = FALSE, repeats.allowed = FALSE))      ## degrees to test during initial value search
-  init_log_liks <- sapply(data_temp, function(dat){
+  init_log_liks <- sapply(data_tmp, function(dat){                                                                     ## run M step once for each combination then store log-likelihood
                       apply(poly_degs_orders, 1, function(order){
-                        ests_temp <- m_step(dat, obs, dim, X_des, order, monotone, covariates, response)
-                        log_lik(dat, dim, ests_temp, X_des, order, response)})}) 
-  if(is.matrix(init_log_liks)){                                                                                        ## position of optimal values
-    max_log_lik_pos <- which(init_log_liks == max(init_log_liks), arr.ind = TRUE)[1,] 
+                        ests_tmp <- m_step(dat, obs, TT, X_des, order, monotone, covariates, response)
+                        log_lik(dat, TT, ests_tmp, X_des, order, response)})}) 
+  if(is.matrix(init_log_liks)){                                                                                        
+    max_log_lik_pos <- which(init_log_liks == max(init_log_liks), arr.ind = TRUE)[1,]                                  ## position of optimal values
     poly_degs <- poly_degs_orders[max_log_lik_pos[1],]                                                                 ## degree permutation that maximises the log-likelihood
     max_log_lik_pos <- max_log_lik_pos[2]
-  }else{
-    max_log_lik_pos <- which(init_log_liks == max(init_log_liks))[1]
-    poly_degs <- as.vector(poly_degs_orders) 
+  } else {
+    max_log_lik_pos <- which(init_log_liks == max(init_log_liks))[1]                                                   ## position of optimal values
+    poly_degs <- as.vector(poly_degs_orders)                                                                           ## degree permutation that maximises the log-likelihood
   }      
   init_ests <- list(pis[[max_log_lik_pos]], mus[[max_log_lik_pos]], sigma2)                                            ## optimal initial estimates
   data <- data_temp[[max_log_lik_pos]]                                                                                 ## data with weights at optimal initial estimates
