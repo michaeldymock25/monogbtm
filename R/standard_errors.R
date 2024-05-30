@@ -5,9 +5,9 @@ std_errors <- function(data, weights, TT, n_gps, estimates, X_des, covariates, r
   
   ## computes standard errors by taking the inverse of the observed information matrix
   
-  Jc_mat <- com_inf(weights, TT, n_gps, estimates, X_des, covariates, response)      ## complete data information matrix
-  Jm_mat <- cov_score(data, TT, weights, estimates, X_des, covariates, response)     ## covariance of the score vector
-  inf_mat <- Jc_mat - Jm_mat                                                         ## observed information matrix
+  Jc_mat <- com_inf(weights, TT, n_gps, estimates, X_des, covariates, response)             ## complete data information matrix
+  Jm_mat <- cov_score(data, TT, n_gps, weights, estimates, X_des, covariates, response)     ## covariance of the score vector
+  inf_mat <- Jc_mat - Jm_mat                                                                ## observed information matrix
   return(solve(inf_mat))   
 }
 
