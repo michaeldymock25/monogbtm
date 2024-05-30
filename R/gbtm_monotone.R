@@ -112,7 +112,7 @@ gbtm_monotone <- function(data, n_gps, x, poly_degs = rep(3, n_gps), n_starts = 
   if(boot == 'on') return(thetas)                                                                                      ## if in a bootstrapped run end here and return thetas
   if(sims == "on") return(list(thetas = thetas, log_likelihood = log_lik_c, time = Sys.time() - start.time))           ## if testing return output here                   
   cat("Converged","\n")                                                                                                ## declare convergence
-  standard_errors <- sqrt(diag(std_errors(data, n, TT, n_gps, estimates, X_des, covariates, response)))                ## compute standard errors
+  standard_errors <- sqrt(diag(std_errors(data, weights, TT, n_gps, estimates, X_des, covariates, response)))          ## compute standard errors
   if(plot_it == TRUE){
     x_pred <- seq(from = min(X_des[,2]), to  = max(X_des[,2]), by = 0.01)                                              ## range to predict over
     X_pred <- t(matrix(x_pred, nrow = p+1, ncol = length(x_pred), byrow = TRUE)^(0:p))                                 ## design matrix for prediction
