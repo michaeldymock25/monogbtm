@@ -49,7 +49,7 @@ gbtm_monotone(dat_ex1, J_ex1, x_ex1, poly_degs_ex1, monotone = FALSE, covariates
 n_ex2 <- 600                                                ## number of individuals n
 TT_ex2 <- 6                                                 ## number of time points TT
 J_ex2 <- 3                                                  ## number of groups J
-x_ex2 <- 1:J_ex2                                            ## setup simple design matrix
+x_ex2 <- 1:TT_ex2                                           ## setup simple design matrix
 group_mem_ex2 <- c(200, 200, 200)                           ## number of individuals belonging to each group
 thetas_ex2 <- matrix(c(10, 1,   0, 1,                       ## parameters governing group trajectories
                        11, 2, 0.1, 2,
