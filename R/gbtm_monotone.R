@@ -297,27 +297,27 @@ conf_boot <- function(data, n, TT, n_gps, p, thetas, conf_level, X_des, n_starts
   ## computes (conf_level) confidence bands using a cases bootstrap
   ## the entire algorithm is run nboot times on resampled data sets
 
-  n_boot <- 500
+  nboot <- 500
   true_coefs <- sapply(1:n_gps, function(gp){
                   mat <- matrix(0, nrow = p+1, ncol = 1)                                                      ## list of current estimated coefficients each with
-                  mat[1:(poly_degs[gp]+1)] <- estimates[["thetas"]][[gp]]                                     ## the same length (higher order terms set to zero)
+                  mat[1:(poly_degs[gp]+1)] <- thetas[[gp]]                                                    ## the same length (higher order terms set to zero)
                   mat}) 
   boot_inds <- lapply(1:nboot, function(i) sample(1:n, size = n, replace = TRUE))                             ## resample data
   boot_dat <- lapply(boot_inds, function(inds) list(data = data[inds,], weights = matrix(0, nrow = n, ncol = n_gps)))
   if(length(unique(X_des[,2])) == TT){
-    X_des_temp <- lapply(1:nboot, function(i) X_des)                                                          ## if all individuals have same time_varying covariates then the design matrix can stay unchanged
+    X_des_tmp <- lapply(1:nboot, function(i) X_des)                                                           ## if all individuals have same time_varying covariates then the design matrix can stay unchanged
   } else {                                                                                                    ## otherwise reformat design matrix to match bootstrapped individuals
-    X_des_temp <- lapply(boot_inds, function(inds){
-                     mat <- matrix(X_des[,2], nrow = n, ncol = TT, byrow = TRUE)[inds,]  
-                     t(t(matrix(as.vector(t(mat)), nrow = n*TT, ncol = p+1))^(0:p))})
+    X_des_tmp <- lapply(boot_inds, function(inds){
+                    mat <- matrix(X_des[,2], nrow = n, ncol = TT, byrow = TRUE)[inds,]  
+                    t(t(matrix(as.vector(t(mat)), nrow = n*TT, ncol = p+1))^(0:p))})
   }
   if(is.null(covariates)){                                                                                    ## do the same for the covariates (if they exist)
-    covariates_temp <- rep(NULL, nboot)
+    covariates_tmp <- rep(NULL, nboot)
   } else {
-    covariates_temp <- lapply(boot_inds, function(inds) covariates[inds,])
+    covariates_tmp <- lapply(boot_inds, function(inds) covariates[inds,])
   }
   coefs <- lapply(1:nboot, function(sim){
-                            est_coefs <- gbtm_monotone(boot_dat[[sim]], n_gps, x = X_des_temp[[sim]], poly_degs = poly_degs, n_starts = n_starts, monotone = monotone, covariates = covariates_temp[[sim]], plot_it = FALSE, conf_level = NULL, boot = 'on', response = response)
+                            est_coefs <- gbtm_monotone(boot_dat[[sim]][["data"]], n_gps, x = X_des_tmp[[sim]], poly_degs = poly_degs, n_starts = n_starts, monotone = monotone, covariates = covariates_tmp[[sim]], plot_it = FALSE, conf_level = NULL, boot = 'on', response = response)
                             ## to avoid label switching problem we first set estimated coefficients to have the same length
                             ## by setting the higher order terms to zero
                             ## we then reorder the groups to match the order of true_coefs using minimum euclidean distance between estimates
