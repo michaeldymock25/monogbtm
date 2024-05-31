@@ -85,9 +85,9 @@ gbtm_monotone <- function(data, n_gps, x, poly_degs = rep(3, n_gps), n_starts = 
                         ests_tmp <- m_step(data, w, n, TT, n_gps, X_des, order, monotone, covariates, response)
                         log_lik(data, n, TT, n_gps, ests_tmp, X_des, order, response)})}) 
   if(is.matrix(init_log_liks)){                                                                                        
-    max_log_lik_pos_arr <- which(init_log_liks == max(init_log_liks), arr.ind = TRUE)                                      
-    max_log_lik_pos <- max_log_lik_pos_arr[,"col"]                                                                     ## position of optimal values
-    poly_degs <- poly_degs_orders[max_log_lik_pos_arr[,"row"],]                                                        ## degree permutation that maximises the log-likelihood 
+    max_log_lik_pos_arr <- which(init_log_liks == max(init_log_liks), arr.ind = TRUE)[1,]                                      
+    max_log_lik_pos <- max_log_lik_pos_arr["col"]                                                                      ## position of optimal values
+    poly_degs <- poly_degs_orders[max_log_lik_pos_arr["row"],]                                                         ## degree permutation that maximises the log-likelihood 
   } else {
     max_log_lik_pos <- which.max(init_log_liks)                                                                        ## position of optimal values
     poly_degs <- as.vector(poly_degs_orders)                                                                           ## degree permutation that maximises the log-likelihood 
@@ -121,7 +121,7 @@ gbtm_monotone <- function(data, n_gps, x, poly_degs = rep(3, n_gps), n_starts = 
     if(response == 'bernoulli') y_pred <- sapply(thetas, function(gp) exp(X_pred[,1:length(gp)]%*%gp)/(1+exp(X_pred[,1:length(gp)]%*%gp)))
     dat_vis <- data.frame(x = rep(x_pred, n_gps), y = as.vector(y_pred), Group = as.factor(rep(as.character(1:n_gps), each = length(x_pred))))
     g_plot <- ggplot2::ggplot(data = dat_vis, ggplot2::aes(x = x, y = y, group = Group)) + 
-              ggplot2::geom_line(ggplot2::aes(colour = Group), size = 1) + 
+              ggplot2::geom_line(ggplot2::aes(colour = Group), linewidth = 1) + 
               ggplot2::xlab("Scaled Time") + 
               ggplot2::ylab("Response") + 
               ggplot2::scale_color_manual(values = c("blue","red","green","black","purple","yellow","orange","pink","darkgreen","brown","gray")) +
@@ -132,7 +132,7 @@ gbtm_monotone <- function(data, n_gps, x, poly_degs = rep(3, n_gps), n_starts = 
       dat_vis <- cbind(dat_vis, data.frame(lower = as.vector(conf_bands[[1]]), upper = as.vector(conf_bands[[2]])))
       g_plot <- g_plot + 
                 ggplot2::geom_ribbon(data = dat_vis, ggplot2::aes(ymin = lower, ymax = upper, fill = Group)) + 
-                ggplot2::geom_line(ggplot2::aes(colour = Group), size = 1) + 
+                ggplot2::geom_line(ggplot2::aes(colour = Group), linewidth = 1) + 
                 ggplot2::scale_fill_manual(values = c("gray50","gray60","gray70","gray80","gray90"), drop = TRUE) 
     } 
     print(g_plot)
