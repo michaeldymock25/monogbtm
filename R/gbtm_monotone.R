@@ -86,7 +86,7 @@ gbtm_monotone <- function(data, n_gps, x, poly_degs = rep(3, n_gps), n_starts = 
                         log_lik(data, n, TT, n_gps, ests_tmp, X_des, order, response)})}) 
   if(is.matrix(init_log_liks)){                                                                                        
     max_log_lik_pos_arr <- which(init_log_liks == max(init_log_liks), arr.ind = TRUE)                                      
-    max_log_lik_pos <- max_log_lik_pos_arr[,"col"]                                                                         ## position of optimal values
+    max_log_lik_pos <- max_log_lik_pos_arr[,"col"]                                                                     ## position of optimal values
     poly_degs <- poly_degs_orders[max_log_lik_pos_arr[,"row"],]                                                        ## degree permutation that maximises the log-likelihood 
   } else {
     max_log_lik_pos <- which.max(init_log_liks)                                                                        ## position of optimal values
