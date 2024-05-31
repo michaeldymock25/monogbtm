@@ -218,7 +218,7 @@ m_step <- function(data, weights, n, TT, n_gps, X_des, poly_degs, monotone, cova
   } else {                                  ## estimate gammas with group proportions function group_props
     opt <- optim(par = rep(0,(n_gps-1)*ncol(covariates)), 
                  fn = group_props, weights = weights, n_gps = n_gps, covariates = covariates,
-                 control = list(maxit = 1000, REPORT = T, fnscale = -1), method = 'L-BFGS-B')
+                 control = list(maxit = 1000, REPORT = T, fnscale = -1), method = 'BFGS')
     gammas <- rbind(0, matrix(opt$par, nrow = n_gps - 1))
     pis <- t(exp(gammas%*%t(covariates)))/rowSums(t(exp(gammas%*%t(covariates))))
   }
