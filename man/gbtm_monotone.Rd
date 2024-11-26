@@ -11,6 +11,7 @@ gbtm_monotone()
   \item{poly_degs}{the degrees of the polynomials to fit to each group, e.g. c(2,2,3) will fit two quadratic groups and one cubic group (note the number of polynomial degrees must match the number of groups)}
   \item{n_starts}{number of sets of initial values to generate (would recommend 5-10 sets unless the data is extremely complex)}
   \item{monotone}{is TRUE if fitting monotone trajectories, FALSE otherwise}
+  \item{scale_time}{is TRUE if the time-varying covariate should be scaled, FALSE otherwise}
   \item{covariates}{if using time-stable covariates input a (n x (q+1)) matrix of q covariates}
   \item{plot_it}{if TRUE will plot the estimated trajectories}
   \item{conf_level}{computes confidence bands (at level conf_level) and plots with trajectories (note plot_it must also be TRUE)}
@@ -33,7 +34,7 @@ gbtm_monotone()
 This function allows the user to fit group based trajectory models using
     monotonically constrained polynomials. This is useful when fitting models
     where the response curve is known to be monotone.
-  
+
 Note that the estimation of standard errors can be computationally unstable in certain circumstances so treat with caution.
 }
 \examples{
